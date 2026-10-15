@@ -2012,3 +2012,124 @@ caption {
     padding: 16px;
   }
 }
+/* Secondary reference card: smaller type and quieter surface than productivity. */
+.productivity-periods {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 12px 0 18px;
+  overflow-wrap: anywhere;
+}
+.my-utilization {
+  margin: 0 0 24px;
+  padding: 24px;
+}
+.my-utilization-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+.my-utilization h2 {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+.my-utilization-heading p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 48ch;
+}
+.my-utilization .utilization-badge {
+  flex-shrink: 0;
+  max-width: 180px;
+}
+.my-utilization .utilization-badge strong {
+  font-size: 32px;
+}
+.utilization-segments {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.utilization-segments li {
+  padding: 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.utilization-segments li[data-active="true"] {
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
+}
+.utilization-segments strong {
+  font-size: 16px;
+}
+.utilization-segments small {
+  font-weight: 600;
+}
+.utilization-reference {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin: 12px 0;
+}
+.utilization-source {
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.utilization-source p {
+  margin: 4px 0;
+}
+.daily-utilization {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  margin-top: 20px;
+}
+.daily-utilization h3 {
+  font-size: 17px;
+  margin-bottom: 14px;
+}
+.daily-utilization-record {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin: 12px 0;
+}
+@media (max-width: 700px) {
+  .my-utilization {
+    padding: 20px;
+  }
+  .my-utilization-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .my-utilization .utilization-badge strong {
+    font-size: 28px;
+  }
+  .utilization-segments li {
+    padding: 10px 8px;
+    font-size: 11px;
+  }
+  .daily-utilization-record {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}
+@media (max-width: 420px) {
+  .utilization-segments {
+    grid-template-columns: 1fr;
+  }
+}

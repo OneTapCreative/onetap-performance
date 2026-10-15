@@ -206,7 +206,7 @@ describe("informational utilization", () => {
       screen.getByText("Coaching & 1-on-1 history — planned"),
     ).toBeTruthy();
   });
-  it("does not add utilization warnings or controls to the associate kiosk", () => {
+  it("adds a secondary associate reference without manager controls", () => {
     render(
       <DemoProvider>
         <Kiosk />
@@ -214,7 +214,7 @@ describe("informational utilization", () => {
     );
     fireEvent.click(screen.getByText("Fill demo credentials"));
     fireEvent.click(screen.getByText("View my performance"));
-    expect(screen.queryByText("Low Utilization")).toBeNull();
+    expect(screen.getByLabelText("My Utilization")).toBeTruthy();
     expect(screen.queryByText("Utilization reference")).toBeNull();
     expect(screen.queryByLabelText("Utilization visual reference")).toBeNull();
     expect(screen.getByText("You’re meeting the standard.")).toBeTruthy();

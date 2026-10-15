@@ -1,4 +1,4 @@
-# Utilization — informational manager display
+# Utilization — informational associate and manager display
 
 `PerformanceRecord.utilizationPercent` is a nullable, source-reported percentage independent of official productivity percentage, earned hours, eligible productive hours and scheduled duration. The synthetic demo includes low, target, high and unavailable examples. It does not derive utilization from shift length or attempt to reproduce source-system eligibility rules.
 
@@ -17,7 +17,9 @@ Raw percentages are not rounded across boundaries. Because the supplied whole-nu
 
 The manager roster includes Latest utilization for each employee: the latest **finalized work assignment** within the selected shift, department and reporting period. It shows the assignment's operational date and ID for traceability. A deterministic tie-break uses finalization timestamp then assignment ID; it does not claim one of several same-day assignments represents the whole shift. A newer finalized record with no utilization remains Unavailable; the display does not silently substitute an older populated value.
 
-Employee manager detail includes the same reference and a percentage/visual label for each finalized work-assignment record. Pending records show Unavailable. The associate kiosk is unchanged and does not display utilization warnings or controls.
+Employee manager detail includes the same reference and a percentage/visual label for each finalized work-assignment record. Pending records show Unavailable. The associate kiosk shows a secondary **My Utilization** card beneath the main productivity section. It uses the same `latestUtilizationRecord` selector and published data as the manager view for the same employee, scope and reporting period. The card has a read-only three-segment legend with text labels and a current-range marker; missing data displays **Not Available**. It does not add warning actions, coaching controls or navigation. Source work date, reporting week, source last-updated timestamp, employee ID, assignment ID and revision stay attached to the exact source record. The timestamp is the report finalization/update time, not a claimed server synchronization time. Productivity period dates are shown separately. Both card and source metadata support English/Spanish.
+
+Daily details show each available finalized assignment’s own reported utilization and metadata, including multi-assignment days. They do not fabricate a combined daily percentage. Pending or missing records remain unavailable. The existing sign-in identity, 60-second inactivity deadline, manual sign-out and session reset control visibility; no utilization is rendered on the sign-in screen. All access is still simulated, not production authorization.
 
 No weekly, four-week, department or warehouse utilization average is manufactured. A defensible aggregate needs the source's approved utilization numerator/denominator and eligibility methodology; those are not supplied in this demo. Weighted productivity still uses earned/eligible hours, which is a different calculation.
 

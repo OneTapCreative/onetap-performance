@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { expect, it } from "vitest";
 import Papa from "papaparse";
 import { DemoProvider } from "@/components/demo-provider";
@@ -30,6 +36,7 @@ it("keeps the baseline until approval, then reflects published data in the same-
   const changed = {
     ...base,
     cases: 3500,
+    utilizationPercent: 79,
     revision: 2,
     status: "corrected" as const,
   };
@@ -53,4 +60,10 @@ it("keeps the baseline until approval, then reflects published data in the same-
   fireEvent.click(screen.getByText("Fill demo credentials"));
   fireEvent.click(screen.getByText("View my performance"));
   expect(screen.getByText("3,500")).toBeTruthy();
+  const card = screen.getByLabelText("My Utilization");
+  expect(within(card).getByText("79%")).toBeTruthy();
+  expect(within(card).getByText(base.finalizedAt)).toBeTruthy();
+  expect(
+    within(card).getByText(base.assignmentId, { exact: false }),
+  ).toBeTruthy();
 });

@@ -17,6 +17,11 @@ import {
 } from "@/lib/warehouse";
 import { UtilizationBadge, UtilizationGuide } from "./utilization";
 import { latestUtilizationRecord } from "@/lib/utilization";
+import {
+  MyUtilization,
+  DailyUtilization,
+  UtilizationSource,
+} from "./my-utilization";
 import { AssignmentSummary } from "./assignment-profile";
 import { Kpi, Translate } from "./ui";
 const formatDate = (date: string, es: boolean) =>
@@ -115,8 +120,8 @@ export function Performance({
               </h1>
               <p>
                 {tr(
-                  "A clear look at your latest completed work.",
-                  "Una mirada clara a tu último trabajo completado.",
+                  "Productivity: Am I meeting my assigned work standard?",
+                  "Productividad: ¿Estoy cumpliendo el estándar de mi trabajo asignado?",
                 )}
               </p>
             </div>
@@ -174,6 +179,20 @@ export function Performance({
               </small>
             </div>
           </section>
+          <p className="productivity-periods">
+            {tr("Productivity reporting periods", "Períodos de productividad")}:{" "}
+            {tr("1 week", "1 semana")} {anchor} – {dateAt(anchor, 4)} ·{" "}
+            {tr("4 weeks", "4 semanas")}{" "}
+            {WEEK_STARTS[Math.max(0, WEEK_STARTS.indexOf(anchor) - 3)]} –{" "}
+            {dateAt(anchor, 4)}
+          </p>
+          {!manager && (
+            <MyUtilization
+              record={utilizationRecord}
+              tr={tr}
+              spanish={spanish}
+            />
+          )}
           <div className="kpis">
             <Kpi
               label={tr("1-week average", "Promedio de 1 semana")}
@@ -468,6 +487,11 @@ export function Performance({
                   )}
                 </p>
               )}
+              <DailyUtilization
+                rows={selected.rows}
+                tr={tr}
+                spanish={spanish}
+              />
             </section>
           )}
         </>
@@ -481,14 +505,11 @@ export function Performance({
               tr={tr}
             />
           </div>
-          <p className="report-time">
-            {tr(
-              "Latest finalized work assignment",
-              "Última asignación finalizada",
-            )}
-            : {utilizationRecord?.assignmentId ?? "—"} ·{" "}
-            {utilizationRecord?.workDate ?? "—"}
-          </p>
+          <UtilizationSource
+            record={utilizationRecord}
+            tr={tr}
+            spanish={spanish}
+          />
           <UtilizationGuide tr={tr} />
         </section>
       )}

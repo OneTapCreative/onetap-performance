@@ -65,6 +65,7 @@ describe("kiosk session", () => {
     vi.useFakeTimers();
     mount();
     login();
+    expect(screen.getByLabelText("My Utilization")).toBeTruthy();
     fireEvent.click(screen.getByText("Explore your 4-week history"));
     act(() => vi.advanceTimersByTime(59000));
     expect(screen.getByRole("timer").textContent).toContain("1s");
@@ -74,6 +75,8 @@ describe("kiosk session", () => {
       (screen.getByLabelText("Employee ID") as HTMLInputElement).value,
     ).toBe("");
     expect(screen.queryByText("Four weeks. One clear view.")).toBeNull();
+    expect(screen.queryByLabelText("Daily utilization")).toBeNull();
+    expect(screen.queryByLabelText("My Utilization")).toBeNull();
   });
   it("resets timeout on real input interaction without resetting on timer rerenders", () => {
     vi.useFakeTimers();
@@ -101,9 +104,11 @@ describe("kiosk session", () => {
     fireEvent.click(screen.getByText("Completar credenciales de prueba"));
     fireEvent.click(screen.getByText("Ver mi rendimiento"));
     expect(screen.getByText("Estás cumpliendo el estándar.")).toBeTruthy();
+    expect(screen.getByLabelText("Mi utilización")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /Terminar y salir/ }));
     expect(screen.getByText("Check your progress")).toBeTruthy();
     expect(document.documentElement.lang).toBe("en");
+    expect(screen.queryByLabelText("Mi utilización")).toBeNull();
   });
   it("navigates through weeks and daily details with official hours", () => {
     mount();

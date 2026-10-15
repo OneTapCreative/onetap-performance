@@ -19,13 +19,17 @@ export function UtilizationBadge({
           ? tr("High Utilization", "Utilización alta")
           : band === "between"
             ? tr("Between display bands", "Entre rangos de visualización")
-            : tr("Unavailable", "No disponible");
+            : tr("Not Available", "No disponible");
   return (
     <span
       className={`utilization-badge util-${band} ${compact ? "compact" : ""}`}
     >
-      <strong>{utilizationPercent(value)}</strong>
-      <span>{label}</span>
+      <strong>
+        {band === "unavailable"
+          ? tr("Not Available", "No disponible")
+          : utilizationPercent(value)}
+      </strong>
+      {band !== "unavailable" && <span>{label}</span>}
     </span>
   );
 }

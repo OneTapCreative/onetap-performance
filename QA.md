@@ -3,7 +3,7 @@
 ## Passed locally
 
 - Production `next build` with Next.js 16.4.1 completed, including TypeScript checking and static route generation for `/`, `/kiosk`, `/manager` and the not-found route.
-- 75 automated tests passed in seven files using Vitest and React Testing Library/jsdom.
+- 88 automated tests passed in eight files using Vitest and React Testing Library/jsdom.
 - Existing correct/incorrect kiosk sign-in, keypad/clear/backspace, manual logout, 60-second idle deadline, user-interaction reset, hidden-tab expiry, Spanish, privacy, daily/week details, manager entry and approved import-to-kiosk refresh tests remain passing.
 - Existing 95% OR boundary/incomplete cases, unequal-duration weighting, corrected revisions, CSV/XLSX parsing, duplicate prevention, stale approvals, invalid values/formulas/file sizes remain passing against the new schema.
 - New tests verify exact shift schedules/IDs, department names/IDs, overnight work dates, overlapping shift candidates, overtime source dates, stable employee IDs, effective-dated transfers, combined shift/department/week filters, distinct headcount, separate work assignment count, correct denominator, expected-assignment completeness, earlier reporting anchors, legacy preservation, configurable threshold and historical/temporary import validation.
@@ -30,4 +30,13 @@ Coaching is architecture only: no stored notes, secure coaching authorization or
 
 ## Utilization enhancement
 
-23 additional test cases cover exact visual boundaries, neutral fractional gaps, missing/invalid values, no rounding across boundaries, unchanged productivity/accountability metrics for 0–100/null utilization, no coaching generation, finalized assignment/shift/department/period selection, optional backwards-compatible imports, utilization-only corrections, real XLSX parsing, bilingual text labels, manager verification notice and kiosk exclusion. Utilization remains source-reported and is not averaged or calculated from shift hours. Import preview exposes its value separately from productivity. Coaching remains planned. Browser/iPad visual acceptance is still outstanding; no new browser verification is claimed.
+23 additional test cases cover exact visual boundaries, neutral fractional gaps, missing/invalid values, no rounding across boundaries, unchanged productivity/accountability metrics for 0–100/null utilization, no coaching generation, finalized assignment/shift/department/period selection, optional backwards-compatible imports, utilization-only corrections, real XLSX parsing, bilingual text labels, manager verification notice and kiosk reference isolation. Utilization remains source-reported and is not averaged or calculated from shift hours. Import preview exposes its value separately from productivity. Coaching remains planned. Browser/iPad visual acceptance is still outstanding; no new browser verification is claimed.
+
+## Associate kiosk utilization update — awaiting deployment approval
+
+- Boundary rendering covers 79%, 80%, 85%, 86%, 92% and null, with exact source values, text labels and a read-only segmented indicator. Missing records never become 0% or borrow another employee’s utilization.
+- Automated checks verify English/Spanish card labels, source dates/timestamps/IDs, current-range text, manager/kiosk source consistency, approved CSV correction reflected in the same-tab kiosk, actual historical day selection, pending/missing daily data and separate records for split assignments.
+- Existing sign-in, incorrect PIN, keypad, manual logout, inactivity expiry, interaction reset, storage/privacy and 95% OR/weighted-calculation tests remain passing. Expiry/manual logout remove utilization from the UI.
+- `npm run typecheck`, `npm test` (88 tests) and `npm run build` pass. No dependencies, sample data or productivity/accountability calculations changed.
+- Responsive CSS uses three `minmax(0, 1fr)` indicator segments above 420px, wrapping source IDs/timestamps, flexible headings, a smaller utilization score than the main productivity score, and stacked segments on narrow screens. This is a source review, not measured browser layout testing.
+- **Still required:** visual/interaction acceptance in iPad Safari at 1024×768 and 768×1024 and at 375/390px, with English/Spanish and a real 60-second session. Browser preview is unavailable in this managed environment; do not mark these checks passed. No new deployment has been made. The branch is local to avoid triggering Git-connected Vercel deployment before approval.
