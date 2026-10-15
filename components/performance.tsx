@@ -1,7 +1,21 @@
 "use client";
 import { useState } from "react";
-import { dateAt, isFinal, PerformanceRecord, WEEK_STARTS } from "@/lib/data";
-import { percent, period, summarize } from "@/lib/performance";
+import {
+  dateAt,
+  isFinal,
+  PerformanceRecord,
+  WEEK_STARTS,
+  workAssignments,
+} from "@/lib/data";
+import { percent, period, summarize, weighted } from "@/lib/performance";
+import {
+  departmentLabel,
+  matchesScope,
+  Scope,
+  shiftLabel,
+  warehouseConfig,
+} from "@/lib/warehouse";
+import { AssignmentSummary } from "./assignment-profile";
 import { Kpi, Translate } from "./ui";
 const formatDate = (date: string, es: boolean) =>
   new Date(date + "T12:00:00Z").toLocaleDateString(es ? "es-US" : "en-US", {
@@ -14,29 +28,65 @@ export function Performance({
   id,
   spanish = false,
   manager = false,
+  scope = {},
+  anchor = WEEK_STARTS[3],
+  workWeeks = WEEK_STARTS,
 }: {
   records: PerformanceRecord[];
   id: string;
   spanish?: boolean;
   manager?: boolean;
+  scope?: Scope;
+  anchor?: string;
+  workWeeks?: string[];
 }) {
   const [week, setWeek] = useState<number | null>(null),
-    [day, setDay] = useState<string | null>(null);
+    [day, setDay] = useState<string | null>(null),
+    [workDate, setWorkDate] = useState("all");
   const tr: Translate = (en, es) => (spanish ? es : en);
-  const summary = summarize(records, id),
-    { one, four, latest, standing, own } = summary;
-  const selected = day ? own.find((r) => r.workDate === day) : undefined;
-  const status =
-    standing === "meets"
-      ? tr("You’re meeting the standard.", "Estás cumpliendo el estándar.")
-      : standing === "review"
-        ? tr("Let’s review your progress.", "Revisemos tu progreso.")
-        : tr("Your report is incomplete.", "Tu informe está incompleto.");
+  const { one, four, latest, standing, own } = summarize(
+      records,
+      id,
+      scope,
+      anchor,
+    ),
+    standard = warehouseConfig.performanceStandard;
+  const expected = workAssignments.filter(
+    (a) => a.employeeId === id && matchesScope(a, scope),
+  );
+  function daily(date: string) {
+    const rows = own.filter((r) => r.workDate === date),
+      planned = expected.filter((a) => a.workDate === date);
+    const complete =
+      planned.length > 0 &&
+      planned.every((a) =>
+        rows.some((r) => r.assignmentId === a.id && isFinal(r)),
+      );
+    return {
+      rows,
+      complete,
+      percent: complete
+        ? rows.length === 1
+          ? rows[0].officialPercent
+          : weighted(rows)
+        : null,
+      cases: rows.filter(isFinal).reduce((s, r) => s + r.cases, 0),
+    };
+  }
+  const workRows = own.filter((r) => workWeeks.includes(r.reportingWeek));
+  const selected = day ? daily(day) : null;
   const time = own
     .filter(isFinal)
     .map((r) => r.finalizedAt)
     .sort()
     .at(-1);
+  const title =
+    standing === "meets"
+      ? tr("You’re meeting the standard.", "Estás cumpliendo el estándar.")
+      : standing === "review"
+        ? tr("Let’s review your progress.", "Revisemos tu progreso.")
+        : tr("Your report is incomplete.", "Tu informe está incompleto.");
+  const scoped = !!scope.shiftId || !!scope.departmentId;
   return (
     <div className="performance" key={id}>
       {week === null ? (
@@ -67,6 +117,24 @@ export function Performance({
               <span>· {tr("Synthetic associate", "Asociado ficticio")}</span>
             </span>
           </div>
+          {!manager && <AssignmentSummary id={id} spanish={spanish} />}
+          {scoped && (
+            <p className="notice">
+              {tr("Filtered work history", "Historial de trabajo filtrado")}:{" "}
+              {scope.shiftId
+                ? shiftLabel(scope.shiftId, spanish)
+                : tr("All Shifts", "Todos los turnos")}{" "}
+              ·{" "}
+              {scope.departmentId
+                ? departmentLabel(scope.departmentId, spanish)
+                : tr("All Departments", "Todos los departamentos")}
+              .{" "}
+              {tr(
+                "Current primary assignment is shown separately.",
+                "La asignación principal actual se muestra por separado.",
+              )}
+            </p>
+          )}
           <section
             className={`spotlight ${standing}`}
             aria-label={tr("Performance status", "Estado de rendimiento")}
@@ -80,11 +148,11 @@ export function Performance({
                     ? tr("MANAGER REVIEW", "REVISIÓN DEL SUPERVISOR")
                     : tr("INSUFFICIENT DATA", "DATOS INSUFICIENTES")}
               </div>
-              <h2>{status}</h2>
+              <h2>{title}</h2>
               <p>
                 {tr(
-                  "You meet the 95% standard when either your 1-week OR 4-week average qualifies.",
-                  "Cumples el estándar del 95% si tu promedio de 1 semana O de 4 semanas lo alcanza.",
+                  `You meet the ${standard}% standard when either your 1-week OR 4-week average qualifies.`,
+                  `Cumples el estándar del ${standard}% si tu promedio de 1 semana O de 4 semanas lo alcanza.`,
                 )}
               </p>
             </div>
@@ -93,7 +161,7 @@ export function Performance({
               <strong>{percent(four.percent)}</strong>
               <small>
                 {four.complete
-                  ? tr("95% standard", "Estándar del 95%")
+                  ? tr(`${standard}% standard`, `Estándar del ${standard}%`)
                   : tr("Insufficient Data", "Datos insuficientes")}
               </small>
             </div>
@@ -128,13 +196,24 @@ export function Performance({
                 "Último turno · rendimiento",
               )}
               value={percent(latest?.officialPercent ?? null)}
-              note={tr(
-                "Official daily report value",
-                "Valor oficial del informe diario",
-              )}
+              note={
+                latest &&
+                own.filter((r) => r.workDate === latest.workDate).length > 1
+                  ? tr(
+                      "Weighted across work assignments",
+                      "Ponderado por asignación de trabajo",
+                    )
+                  : tr(
+                      "Official daily report value",
+                      "Valor oficial del informe diario",
+                    )
+              }
             />
           </div>
-          <button className="history-cta" onClick={() => setWeek(3)}>
+          <button
+            className="history-cta"
+            onClick={() => setWeek(WEEK_STARTS.indexOf(anchor))}
+          >
             <span>
               <small>
                 {tr(
@@ -153,12 +232,7 @@ export function Performance({
           </button>
           <p className="report-time">
             {tr("Latest finalized report:", "Último informe finalizado:")}{" "}
-            {time
-              ? new Date(time).toLocaleString(spanish ? "es-US" : "en-US", {
-                  timeZone: "UTC",
-                }) + " UTC"
-              : "—"}{" "}
-            · {tr("Synthetic data", "Datos ficticios")}
+            {time ?? "—"} · {tr("Synthetic data", "Datos ficticios")}
           </p>
           {standing === "review" && (
             <p className="notice">
@@ -200,8 +274,8 @@ export function Performance({
             </button>
           </div>
           <div className="week-grid">
-            {WEEK_STARTS.map((w, i) => {
-              const p = period(own, [w]);
+            {WEEK_STARTS.filter((w) => w <= anchor).map((w, i) => {
+              const p = period(records, [w], id, scope);
               return (
                 <button
                   key={w}
@@ -217,7 +291,7 @@ export function Performance({
                       {tr("Week", "Semana")} {i + 1}
                     </span>
                     <span aria-hidden="true">
-                      {p.percent !== null && p.percent >= 95 ? "✓" : "↗"}
+                      {p.percent !== null && p.percent >= standard ? "✓" : "↗"}
                     </span>
                   </div>
                   <strong>{percent(p.percent)}</strong>
@@ -252,14 +326,16 @@ export function Performance({
                 </h2>
               </div>
               <span>
-                {tr("95% daily indicator", "Indicador diario del 95%")}
+                {tr(
+                  `${standard}% daily indicator`,
+                  `Indicador diario del ${standard}%`,
+                )}
               </span>
             </div>
             <div className="day-list">
               {Array.from({ length: 5 }, (_, d) => {
                 const date = dateAt(WEEK_STARTS[week], d),
-                  row = own.find((r) => r.workDate === date),
-                  ready = !!row && isFinal(row);
+                  value = daily(date);
                 return (
                   <button
                     className={`day-row ${day === date ? "active" : ""}`}
@@ -277,21 +353,20 @@ export function Performance({
                       <small>{formatDate(date, spanish)}</small>
                     </span>
                     <span className="day-cases">
-                      {ready ? row.cases.toLocaleString() : "—"}{" "}
+                      {value.complete ? value.cases.toLocaleString() : "—"}{" "}
                       <small>{tr("cases", "cajas")}</small>
                     </span>
                     <span
-                      className={`day-score ${ready && row.officialPercent >= 95 ? "positive" : ""}`}
+                      className={`day-score ${value.percent !== null && value.percent >= standard ? "positive" : ""}`}
                     >
-                      {ready
-                        ? percent(row.officialPercent)
-                        : tr(
-                            row ? "Incomplete" : "Unavailable",
-                            row ? "Incompleto" : "No disponible",
-                          )}
+                      {value.complete
+                        ? percent(value.percent)
+                        : value.rows.length
+                          ? tr("Incomplete", "Incompleto")
+                          : tr("Unavailable", "No disponible")}
                       <small>
-                        {ready
-                          ? row.officialPercent >= 95
+                        {value.complete
+                          ? value.percent! >= standard
                             ? tr("At standard", "Cumple el estándar")
                             : tr("Below daily target", "Bajo la meta diaria")
                           : tr(
@@ -306,7 +381,7 @@ export function Performance({
               })}
             </div>
           </section>
-          {day && (
+          {day && selected && (
             <section className="panel day-detail" aria-live="polite">
               <div className="section-heading">
                 <h2>
@@ -317,28 +392,34 @@ export function Performance({
                   {tr("Close", "Cerrar")}
                 </button>
               </div>
-              {selected && isFinal(selected) ? (
+              {selected.complete ? (
                 <>
                   <div className="detail-grid">
                     <Kpi
                       label={tr("Cases completed", "Cajas completadas")}
                       value={selected.cases.toLocaleString()}
-                      note={selected.workDate}
+                      note={day}
                     />
                     <Kpi
                       label={tr("Official performance", "Rendimiento oficial")}
-                      value={percent(selected.officialPercent)}
-                      note={tr(
-                        "Reported daily value",
-                        "Valor diario reportado",
-                      )}
+                      value={percent(selected.percent)}
+                      note={
+                        selected.rows.length === 1
+                          ? tr("Reported daily value", "Valor diario reportado")
+                          : tr(
+                              "Weighted assignment results",
+                              "Resultados ponderados de asignaciones",
+                            )
+                      }
                     />
                     <Kpi
                       label={tr(
                         "Earned standard hours",
                         "Horas estándar ganadas",
                       )}
-                      value={selected.earnedHours.toFixed(3)}
+                      value={selected.rows
+                        .reduce((s, r) => s + r.earnedHours, 0)
+                        .toFixed(3)}
                       note={tr(
                         "Synthetic exported hours",
                         "Horas exportadas ficticias",
@@ -349,21 +430,27 @@ export function Performance({
                         "Actual productive hours",
                         "Horas productivas reales",
                       )}
-                      value={selected.actualHours.toFixed(2)}
+                      value={selected.rows
+                        .reduce((s, r) => s + r.actualHours, 0)
+                        .toFixed(2)}
                       note={tr(
                         "Eligible productive time",
                         "Tiempo productivo elegible",
                       )}
                     />
                   </div>
-                  <p className="report-time">
-                    {tr("Report status", "Estado del informe")}:{" "}
-                    {selected.status === "corrected"
-                      ? tr("Corrected", "Corregido")
-                      : tr("Finalized", "Finalizado")}{" "}
-                    · {tr("Revision", "Revisión")} {selected.revision} ·{" "}
-                    {selected.finalizedAt}
-                  </p>
+                  {selected.rows.map((r) => (
+                    <p className="report-time" key={r.assignmentId}>
+                      {departmentLabel(r.departmentId, spanish)} ·{" "}
+                      {shiftLabel(r.shiftId, spanish)} ·{" "}
+                      {tr("Work date", "Fecha operativa")}: {r.workDate} ·{" "}
+                      {tr("Revision", "Revisión")} {r.revision} ·{" "}
+                      {r.status === "corrected"
+                        ? tr("Corrected", "Corregido")
+                        : tr("Finalized", "Finalizado")}{" "}
+                      · {r.finalizedAt}
+                    </p>
+                  ))}
                 </>
               ) : (
                 <p className="notice">
@@ -376,6 +463,82 @@ export function Performance({
             </section>
           )}
         </>
+      )}
+      {manager && (
+        <section className="panel work-records">
+          <div className="section-heading">
+            <h2>
+              {tr(
+                "Work assignment records",
+                "Registros de asignaciones de trabajo",
+              )}
+            </h2>
+            <label className="date-filter">
+              {tr("Work date", "Fecha operativa")}
+              <select
+                aria-label={tr("Filter work date", "Filtrar fecha operativa")}
+                value={workDate}
+                onChange={(e) => setWorkDate(e.target.value)}
+              >
+                <option value="all">
+                  {tr("All dates", "Todas las fechas")}
+                </option>
+                {[...new Set(workRows.map((r) => r.workDate))]
+                  .sort()
+                  .map((date) => (
+                    <option key={date}>{date}</option>
+                  ))}
+              </select>
+            </label>
+          </div>
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>{tr("Date", "Fecha")}</th>
+                  <th>{tr("Department", "Departamento")}</th>
+                  <th>{tr("Shift", "Turno")}</th>
+                  <th>{tr("Cases", "Cajas")}</th>
+                  <th>%</th>
+                  <th>
+                    {tr("Earned / eligible h", "Horas ganadas / elegibles")}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {workRows
+                  .filter((r) => workDate === "all" || r.workDate === workDate)
+                  .map((r) => (
+                    <tr key={r.assignmentId}>
+                      <td>
+                        {r.workDate}
+                        <small>{r.assignmentId}</small>
+                      </td>
+                      <td>{departmentLabel(r.departmentId, spanish)}</td>
+                      <td>{shiftLabel(r.shiftId, spanish)}</td>
+                      <td>{isFinal(r) ? r.cases : "—"}</td>
+                      <td>
+                        {isFinal(r)
+                          ? percent(r.officialPercent)
+                          : tr("Incomplete", "Incompleto")}
+                      </td>
+                      <td>
+                        {r.earnedHours.toFixed(3)} / {r.actualHours.toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+            {!workRows.length && (
+              <p className="empty">
+                {tr(
+                  "No records in this scope.",
+                  "No hay registros en este ámbito.",
+                )}
+              </p>
+            )}
+          </div>
+        </section>
       )}
       {!manager && (
         <p className="quiet-note">

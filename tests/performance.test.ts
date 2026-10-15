@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { initialRecords, associates, recordKey, WEEK_STARTS } from "@/lib/data";
+import {
+  initialRecords,
+  associates,
+  recordKey,
+  WEEK_STARTS,
+  workAssignments,
+} from "@/lib/data";
 import { weighted, standing, summarize, period } from "@/lib/performance";
 describe("accountability", () => {
   it.each([
@@ -36,7 +42,7 @@ describe("accountability", () => {
     expect(new Set(initialRecords.map(recordKey)).size).toBe(
       initialRecords.length,
     );
-    expect(initialRecords).toHaveLength(598);
+    expect(initialRecords).toHaveLength(workAssignments.length - 2);
   });
   it("does not classify missing and pending periods as failures", () => {
     expect(summarize(initialRecords, "EMP007").standing).toBe("insufficient");

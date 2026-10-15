@@ -230,8 +230,8 @@ export function ImportPanel({ tr }: { tr: Translate }) {
       )}
       <p className="quiet-note">
         {tr(
-          "Imports merge by employee ID + work date. Missing employees remain unchanged. Changed records require a higher revision.",
-          "Las importaciones se combinan por ID + fecha de trabajo. Los empleados ausentes no cambian. Los registros modificados requieren una revisión mayor.",
+          "Imports merge by employee ID + work assignment ID. Missing employees remain unchanged. Changed records require a higher revision.",
+          "Las importaciones se combinan por ID + asignación de trabajo. Los empleados ausentes no cambian. Los registros modificados requieren una revisión mayor.",
         )}
       </p>
     </section>

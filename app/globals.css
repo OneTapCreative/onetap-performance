@@ -1747,3 +1747,147 @@ caption {
     padding-bottom: 16px;
   }
 }
+.assignment-summary {
+  display: grid;
+  grid-template-columns: 1fr 0.8fr 1.4fr;
+  gap: 18px;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 16px;
+  padding: 18px 22px;
+  margin: 18px 0 24px;
+}
+.assignment-summary small {
+  color: var(--muted);
+  font-size: 10px;
+  margin-bottom: 7px;
+}
+.assignment-summary b {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.scope-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.3fr;
+  gap: 16px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: white;
+  margin-bottom: 26px;
+}
+.scope-filters label,
+.date-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.scope-filters select,
+.date-filter select {
+  min-height: 48px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 13px;
+  color: var(--ink);
+}
+.scope-reporting {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.5fr;
+  gap: 14px;
+  margin-bottom: 26px;
+}
+.scope-reporting .kpi > strong {
+  font-size: 27px;
+}
+.scope-reporting .kpi > small {
+  overflow-wrap: anywhere;
+}
+.employee-profile {
+  margin: 18px 0 30px;
+}
+.profile-history {
+  border-top: 1px solid var(--line);
+  padding: 15px 0;
+  font-size: 13px;
+}
+.profile-history summary,
+.legacy-note summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: 12px 0;
+  color: var(--green);
+  font-weight: 600;
+}
+.work-records {
+  margin-top: 26px;
+}
+.legacy-note {
+  margin-top: 24px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.legacy-note a {
+  display: inline-block;
+  padding: 15px 0;
+  text-decoration: underline;
+  color: var(--green);
+}
+@media (max-width: 850px) {
+  .scope-reporting {
+    grid-template-columns: 1fr 1fr;
+  }
+  .scope-reporting .kpi:last-child {
+    grid-column: 1/-1;
+  }
+  .scope-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+  .scope-filters label:last-child {
+    grid-column: 1/-1;
+  }
+}
+@media (max-width: 700px) {
+  .assignment-summary {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    padding: 18px;
+  }
+  .assignment-summary > span:last-child {
+    grid-column: 1/-1;
+  }
+  .scope-filters {
+    padding: 16px;
+    gap: 12px;
+  }
+  .scope-filters select {
+    font-size: 12px;
+    padding: 10px;
+  }
+  .scope-reporting {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .scope-reporting .kpi:last-child {
+    grid-column: auto;
+  }
+  .scope-reporting .kpi > strong {
+    font-size: 21px;
+  }
+  .work-records .section-heading {
+    flex-direction: column;
+  }
+  .date-filter {
+    width: 100%;
+  }
+  .employee-profile .section-heading {
+    flex-direction: column;
+  }
+  .employee-profile .section-heading > span {
+    max-width: none;
+  }
+}

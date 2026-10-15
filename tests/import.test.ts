@@ -32,7 +32,7 @@ describe("report import", () => {
       initialRecords,
     );
     expect(stage.errors).toEqual([]);
-    expect(stage.duplicates).toBe(598);
+    expect(stage.duplicates).toBe(initialRecords.length);
     expect(stage.rows).toHaveLength(0);
     expect(() => publish(initialRecords, stage)).toThrow();
   });
@@ -49,7 +49,7 @@ describe("report import", () => {
       initialRecords.find((r) => recordKey(r) === recordKey(base))?.cases,
     ).toBe(base.cases);
     const next = publish(initialRecords, stage);
-    expect(next).toHaveLength(598);
+    expect(next).toHaveLength(initialRecords.length);
     expect(next.find((r) => recordKey(r) === recordKey(base))?.cases).toBe(
       3500,
     );

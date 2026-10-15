@@ -1,6 +1,8 @@
 import Papa from "papaparse";
+import { departmentLabel } from "./warehouse";
 import {
   associates,
+  assignmentById,
   dateAt,
   PerformanceRecord,
   recordKey,
@@ -8,6 +10,9 @@ import {
 } from "./data";
 export const COLUMNS = [
   "employee_id",
+  "assignment_id",
+  "shift_id",
+  "department_id",
   "department",
   "work_date",
   "reporting_week",
@@ -32,6 +37,9 @@ export type ImportStage = {
 const canonical = (r: PerformanceRecord) =>
   JSON.stringify([
     r.employeeId,
+    r.assignmentId,
+    r.shiftId,
+    r.departmentId,
     r.department,
     r.workDate,
     r.reportingWeek,
@@ -43,25 +51,25 @@ const canonical = (r: PerformanceRecord) =>
     r.revision,
     r.finalizedAt,
   ]);
-export function toImportRow(r: PerformanceRecord) {
-  return Object.fromEntries(
-    COLUMNS.map((c, i) => [
-      c,
-      [
-        r.employeeId,
-        r.department,
-        r.workDate,
-        r.reportingWeek,
-        r.cases,
-        r.earnedHours,
-        r.actualHours,
-        r.officialPercent,
-        r.status,
-        r.revision,
-        r.finalizedAt,
-      ][i],
-    ]),
-  );
+export function toImportRow(
+  r: PerformanceRecord,
+): Record<string, string | number> {
+  return {
+    employee_id: r.employeeId,
+    assignment_id: r.assignmentId,
+    shift_id: r.shiftId,
+    department_id: r.departmentId,
+    department: r.department,
+    work_date: r.workDate,
+    reporting_week: r.reportingWeek,
+    cases_completed: r.cases,
+    earned_standard_hours: r.earnedHours,
+    actual_eligible_productive_hours: r.actualHours,
+    official_performance_percentage: r.officialPercent,
+    finalization_status: r.status,
+    revision: r.revision,
+    finalized_at: r.finalizedAt,
+  };
 }
 export function validate(
   input: Record<string, unknown>[],
@@ -85,7 +93,9 @@ export function validate(
     return stage;
   }
   if (missingColumns.length) {
-    stage.errors.push(`Missing columns: ${missingColumns.join(", ")}`);
+    stage.errors.push(
+      `Missing columns: ${missingColumns.join(", ")}. Legacy v1 reports require a reviewed assignment mapping; no automatic department mapping is applied.`,
+    );
     return stage;
   }
   if (!input.length) stage.errors.push("The report is empty.");
@@ -102,6 +112,9 @@ export function validate(
       text(key) === "" ? NaN : Number(text(key));
     const r: PerformanceRecord = {
       employeeId: text("employee_id"),
+      assignmentId: text("assignment_id"),
+      shiftId: text("shift_id") as PerformanceRecord["shiftId"],
+      departmentId: text("department_id") as PerformanceRecord["departmentId"],
       department: text("department"),
       workDate: text("work_date"),
       reportingWeek: text("reporting_week"),
@@ -121,8 +134,19 @@ export function validate(
       return;
     }
     employees.add(r.employeeId);
-    if (r.department !== person.department) {
-      error("Department does not match the synthetic roster.");
+    const assignment = assignmentById(r.assignmentId);
+    if (
+      !assignment ||
+      assignment.employeeId !== r.employeeId ||
+      assignment.workDate !== r.workDate ||
+      assignment.reportingWeek !== r.reportingWeek ||
+      assignment.shiftId !== r.shiftId ||
+      assignment.departmentId !== r.departmentId ||
+      r.department !== departmentLabel(r.departmentId)
+    ) {
+      error(
+        "Work assignment, operational date, shift or department does not match the registered synthetic work assignment. Primary assignment is not used to relabel historical work.",
+      );
       return;
     }
     if (
@@ -174,7 +198,7 @@ export function validate(
     }
     const key = recordKey(r);
     if (seen.has(key)) {
-      error(`Duplicate employee/date key ${key} within this file.`);
+      error(`Duplicate employee/work-assignment key ${key} within this file.`);
       return;
     }
     seen.add(key);

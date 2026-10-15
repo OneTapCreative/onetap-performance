@@ -5,8 +5,17 @@ import { Brand, Kpi } from "@/components/ui";
 import { useDemo } from "@/components/demo-provider";
 import { Performance } from "@/components/performance";
 import { ImportPanel } from "@/components/import-panel";
-import { associates, isFinal, WEEK_STARTS } from "@/lib/data";
-import { percent, summarize, weighted } from "@/lib/performance";
+import { EmployeeProfile } from "@/components/assignment-profile";
+import { associates, WEEK_STARTS } from "@/lib/data";
+import { percent, scopedOverview, summarize } from "@/lib/performance";
+import {
+  departments,
+  shifts,
+  departmentLabel,
+  shiftLabel,
+  Scope,
+  warehouseConfig,
+} from "@/lib/warehouse";
 export default function Manager() {
   const { records, publication } = useDemo();
   const [access, setAccess] = useState(false),
@@ -15,6 +24,9 @@ export default function Manager() {
     [filter, setFilter] = useState("all"),
     [selected, setSelected] = useState<string | null>(null),
     [tab, setTab] = useState<"overview" | "import">("overview");
+  const [shift, setShift] = useState("all"),
+    [department, setDepartment] = useState("all"),
+    [reporting, setReporting] = useState("four");
   const tr = (en: string, es: string) => (spanish ? es : en);
   useEffect(() => {
     document.documentElement.lang = spanish ? "es" : "en";
@@ -22,21 +34,106 @@ export default function Manager() {
       document.documentElement.lang = "en";
     };
   }, [spanish]);
-  const summaries = useMemo(
-    () => associates.map((a) => ({ ...a, ...summarize(records, a.id) })),
-    [records],
+  const scope: Scope = useMemo(
+    () => ({
+      shiftId: shift === "all" ? undefined : (shift as Scope["shiftId"]),
+      departmentId:
+        department === "all"
+          ? undefined
+          : (department as Scope["departmentId"]),
+    }),
+    [shift, department],
   );
-  const count = (s: string) => summaries.filter((a) => a.standing === s).length;
+  const selectedWeeks = useMemo(
+    () => (reporting === "four" ? WEEK_STARTS : [reporting]),
+    [reporting],
+  );
+  const anchor = selectedWeeks[selectedWeeks.length - 1];
+  const overview = useMemo(
+    () => scopedOverview(records, scope, selectedWeeks),
+    [records, scope, selectedWeeks],
+  );
+  const summaries = useMemo(
+    () =>
+      associates
+        .filter((a) => overview.ids.includes(a.id))
+        .map((a) => ({ ...a, ...summarize(records, a.id, scope, anchor) })),
+    [records, scope, anchor, overview.ids],
+  );
+  const count = (status: string) =>
+    summaries.filter((a) => a.standing === status).length;
   const rows = summaries.filter(
     (a) =>
       (filter === "all" || filter === a.standing) &&
-      `${a.id} ${a.name} ${a.department}`
+      `${a.id} ${a.name} ${overview.expected
+        .filter((w) => w.employeeId === a.id)
+        .map((w) => departmentLabel(w.departmentId))
+        .join(" ")}`
         .toLowerCase()
         .includes(query.toLowerCase()),
   );
-  const recent = records.filter(
-    (r) => r.reportingWeek === WEEK_STARTS[3] && isFinal(r),
-  );
+  const changeScope = (setter: (value: string) => void, value: string) => {
+    setter(value);
+    setSelected(null);
+  };
+  function scopeFilters() {
+    return (
+      <section
+        className="scope-filters"
+        aria-label={tr("Warehouse scope", "Ámbito del almacén")}
+      >
+        <label>
+          {tr("Shift", "Turno")}
+          <select
+            aria-label={tr("Shift filter", "Filtro de turno")}
+            value={shift}
+            onChange={(e) => changeScope(setShift, e.target.value)}
+          >
+            <option value="all">{tr("All Shifts", "Todos los turnos")}</option>
+            {shifts.map((s) => (
+              <option key={s.id} value={s.id}>
+                {spanish ? s.es : s.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          {tr("Department", "Departamento")}
+          <select
+            aria-label={tr("Department filter", "Filtro de departamento")}
+            value={department}
+            onChange={(e) => changeScope(setDepartment, e.target.value)}
+          >
+            <option value="all">
+              {tr("All Departments", "Todos los departamentos")}
+            </option>
+            {departments.map((d) => (
+              <option key={d.id} value={d.id}>
+                {spanish ? d.es : d.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          {tr("Reporting period", "Período de informes")}
+          <select
+            aria-label={tr("Reporting period", "Período de informes")}
+            value={reporting}
+            onChange={(e) => changeScope(setReporting, e.target.value)}
+          >
+            <option value="four">
+              {tr("All four weeks", "Las cuatro semanas")}
+            </option>
+            {WEEK_STARTS.map((w, i) => (
+              <option key={w} value={w}>
+                {tr("Week", "Semana")} {i + 1} · {w}
+              </option>
+            ))}
+          </select>
+        </label>
+      </section>
+    );
+  }
   return (
     <main className="app-shell manager">
       <header className="header">
@@ -57,6 +154,9 @@ export default function Manager() {
                 setQuery("");
                 setFilter("all");
                 setTab("overview");
+                setShift("all");
+                setDepartment("all");
+                setReporting("four");
               }}
             >
               {tr("Exit demo", "Salir de la demo")}
@@ -128,6 +228,7 @@ export default function Manager() {
               {tr("Open kiosk", "Abrir kiosco")} ↗
             </Link>
           </div>
+          {tab === "overview" && scopeFilters()}
           {selected ? (
             <>
               <button
@@ -136,12 +237,16 @@ export default function Manager() {
               >
                 ← {tr("All associates", "Todos los asociados")}
               </button>
+              <EmployeeProfile id={selected} spanish={spanish} />
               <Performance
-                key={selected}
+                key={`${selected}-${shift}-${department}-${anchor}`}
                 records={records}
                 id={selected}
                 spanish={spanish}
                 manager
+                scope={scope}
+                anchor={anchor}
+                workWeeks={selectedWeeks}
               />
             </>
           ) : tab === "import" ? (
@@ -194,34 +299,34 @@ export default function Manager() {
               <div className="kpis manager-kpis">
                 <Kpi
                   label={tr("Total associates", "Total de asociados")}
-                  value={associates.length}
+                  value={overview.ids.length}
                   note={tr(
-                    "Fictional demo roster",
-                    "Plantilla de demostración ficticia",
+                    "Distinct employees in selected scope",
+                    "Asociados únicos en el ámbito seleccionado",
                   )}
                 />
                 <Kpi
                   label={tr("Meeting standard", "Cumplen el estándar")}
                   value={count("meets")}
                   note={tr(
-                    "1-week OR 4-week ≥ 95%",
-                    "1 semana O 4 semanas ≥ 95%",
+                    `1-week OR 4-week ≥ ${warehouseConfig.performanceStandard}%`,
+                    `1 semana O 4 semanas ≥ ${warehouseConfig.performanceStandard}%`,
                   )}
                 />
                 <Kpi
                   label={tr("Manager review", "Revisión del supervisor")}
                   value={count("review")}
                   note={tr(
-                    "Both complete periods below 95%",
-                    "Ambos períodos completos bajo el 95%",
+                    "Both complete periods below standard",
+                    "Ambos períodos completos bajo el estándar",
                   )}
                 />
                 <Kpi
                   label={tr("Insufficient Data", "Datos insuficientes")}
                   value={count("insufficient")}
                   note={tr(
-                    "Verify missing or pending reports",
-                    "Verifica informes ausentes o pendientes",
+                    "No qualifying complete result",
+                    "Sin resultado completo que cumpla",
                   )}
                 />
               </div>
@@ -229,24 +334,57 @@ export default function Manager() {
                 <div>
                   <span>
                     {tr(
-                      "Latest week · reported productivity",
-                      "Última semana · productividad reportada",
+                      "Selected scope · weighted productivity",
+                      "Ámbito seleccionado · productividad ponderada",
                     )}
                   </span>
-                  <strong>{percent(weighted(recent))}</strong>
+                  <strong>{percent(overview.percent)}</strong>
                 </div>
                 <div>
                   <span>{tr("Finalized cases", "Cajas finalizadas")}</span>
-                  <strong>
-                    {recent.reduce((s, r) => s + r.cases, 0).toLocaleString()}
-                  </strong>
+                  <strong>{overview.cases.toLocaleString()}</strong>
                 </div>
                 <p>
                   {tr(
-                    "Weighted earned ÷ actual eligible hours. Partial team coverage: missing or pending records excluded.",
-                    "Horas ganadas ÷ reales elegibles, ponderadas. Cobertura parcial: excluye registros ausentes o pendientes.",
+                    "Earned ÷ eligible productive hours. Missing and pending work is excluded from this partial productivity summary. Scheduled shift hours never enter the calculation.",
+                    "Horas ganadas ÷ horas productivas elegibles. Este resumen parcial excluye trabajo ausente o pendiente. Las horas de turno programadas no entran en el cálculo.",
                   )}
                 </p>
+              </div>
+              <div className="scope-reporting">
+                <Kpi
+                  label={tr("Work assignments", "Asignaciones de trabajo")}
+                  value={overview.workAssignmentCount}
+                  note={tr(
+                    "Separate from distinct headcount",
+                    "Independientes del número de asociados",
+                  )}
+                />
+                <Kpi
+                  label={tr(
+                    "Missing / incomplete records",
+                    "Registros ausentes / incompletos",
+                  )}
+                  value={`${overview.missing.length} / ${overview.pending.length}`}
+                  note={tr(
+                    "Expected assignments without a finalized result",
+                    "Asignaciones previstas sin resultado finalizado",
+                  )}
+                />
+                <Kpi
+                  label={tr(
+                    "Latest available report",
+                    "Último informe disponible",
+                  )}
+                  value={overview.latestReport?.slice(0, 10) ?? "—"}
+                  note={
+                    overview.latestReport ??
+                    tr(
+                      "No finalized records in scope",
+                      "Sin registros finalizados en el ámbito",
+                    )
+                  }
+                />
               </div>
               <section className="panel roster">
                 <div className="section-heading">
@@ -256,7 +394,9 @@ export default function Manager() {
                       {tr("Associate performance", "Rendimiento de asociados")}
                     </h2>
                   </div>
-                  <span>{rows.length} / 30</span>
+                  <span>
+                    {rows.length} / {overview.ids.length}
+                  </span>
                 </div>
                 <div className="filters">
                   <input
@@ -293,7 +433,13 @@ export default function Manager() {
                     <thead>
                       <tr>
                         <th>{tr("Associate", "Asociado")}</th>
-                        <th>{tr("Department", "Departamento")}</th>
+                        <th>
+                          {tr(
+                            "Work department(s)",
+                            "Departamento(s) del trabajo",
+                          )}
+                        </th>
+                        <th>{tr("Work shift(s)", "Turno(s) del trabajo")}</th>
                         <th>{tr("1 week", "1 semana")}</th>
                         <th>{tr("4 weeks", "4 semanas")}</th>
                         <th>{tr("Standing", "Estado")}</th>
@@ -305,41 +451,63 @@ export default function Manager() {
                       </tr>
                     </thead>
                     <tbody>
-                      {rows.map((a) => (
-                        <tr key={a.id}>
-                          <td>
-                            <b>{a.id}</b>
-                            <small>{a.name}</small>
-                          </td>
-                          <td>{a.department}</td>
-                          <td>{percent(a.one.percent)}</td>
-                          <td>{percent(a.four.percent)}</td>
-                          <td>
-                            <span className={`standing ${a.standing}`}>
-                              {a.standing === "meets"
-                                ? tr("Meets standard", "Cumple el estándar")
-                                : a.standing === "review"
-                                  ? tr(
-                                      "Manager review",
-                                      "Revisión del supervisor",
-                                    )
-                                  : tr(
-                                      "Insufficient Data",
-                                      "Datos insuficientes",
-                                    )}
-                            </span>
-                          </td>
-                          <td>
-                            <button
-                              className="view-button"
-                              aria-label={`${tr("View", "Ver")} ${a.id}`}
-                              onClick={() => setSelected(a.id)}
-                            >
-                              ↗
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {rows.map((a) => {
+                        const work = overview.expected.filter(
+                          (w) => w.employeeId === a.id,
+                        );
+                        return (
+                          <tr key={a.id}>
+                            <td>
+                              <b>{a.id}</b>
+                              <small>{a.name}</small>
+                            </td>
+                            <td>
+                              {[
+                                ...new Set(
+                                  work.map((w) =>
+                                    departmentLabel(w.departmentId, spanish),
+                                  ),
+                                ),
+                              ].join(", ")}
+                            </td>
+                            <td>
+                              {[
+                                ...new Set(
+                                  work.map((w) =>
+                                    shiftLabel(w.shiftId, spanish),
+                                  ),
+                                ),
+                              ].join(", ")}
+                            </td>
+                            <td>{percent(a.one.percent)}</td>
+                            <td>{percent(a.four.percent)}</td>
+                            <td>
+                              <span className={`standing ${a.standing}`}>
+                                {a.standing === "meets"
+                                  ? tr("Meets standard", "Cumple el estándar")
+                                  : a.standing === "review"
+                                    ? tr(
+                                        "Manager review",
+                                        "Revisión del supervisor",
+                                      )
+                                    : tr(
+                                        "Insufficient Data",
+                                        "Datos insuficientes",
+                                      )}
+                              </span>
+                            </td>
+                            <td>
+                              <button
+                                className="view-button"
+                                aria-label={`${tr("View", "Ver")} ${a.id}`}
+                                onClick={() => setSelected(a.id)}
+                              >
+                                ↗
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                   {!rows.length && (
@@ -354,10 +522,31 @@ export default function Manager() {
               </section>
               <p className="quiet-note">
                 {tr(
-                  "Review flags support supervisor verification only and never initiate disciplinary action.",
-                  "Las alertas apoyan la verificación del supervisor y nunca inician acciones disciplinarias.",
+                  "Scope totals are independent of search/status filters. Accountability uses the selected work scope and the 1-week/4-week window ending at the selected period. Each employee is counted once; work assignments are counted separately. Review flags never initiate disciplinary action.",
+                  "Los totales del ámbito son independientes de la búsqueda y el filtro de estado. La evaluación usa el ámbito del trabajo y los períodos de 1 y 4 semanas que terminan en el período elegido. Cada asociado se cuenta una vez; las asignaciones se cuentan por separado. Las alertas nunca inician acciones disciplinarias.",
                 )}
               </p>
+              <details className="legacy-note">
+                <summary>
+                  {tr(
+                    "Legacy demonstration archive · 598 preserved records",
+                    "Archivo histórico de demostración · 598 registros conservados",
+                  )}
+                </summary>
+                <p>
+                  {tr(
+                    "Earlier department labels have no confirmed mapping. They remain preserved outside active configured reports; no historical records were deleted or silently relabeled.",
+                    "Las etiquetas anteriores no tienen una correspondencia confirmada. Se conservan fuera de los informes configurados activos; no se eliminaron ni se cambiaron silenciosamente.",
+                  )}
+                </p>
+                <a href="/samples/legacy-v1/baseline.csv" download>
+                  {tr(
+                    "Download original history",
+                    "Descargar historial original",
+                  )}{" "}
+                  ↙
+                </a>
+              </details>
             </>
           )}
           <p className="report-time">

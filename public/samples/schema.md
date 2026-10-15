@@ -1,33 +1,37 @@
-# OneTap Performance synthetic import schema
+# OneTap Performance v2 synthetic import schema
 
-Use only the included synthetic roster EMP001–EMP030. CSV must have a header row; XLSX uses its first worksheet, a header row and plain cell values. Dates must be strings, not Excel date cells. No formulas, hyperlinks, rich text, macros or merged headers.
+Use only the registered synthetic roster EMP001–EMP030 and work assignments in the current demo. All column headers are required, including stable work, shift and department IDs. CSV has a header row; XLSX uses its first sheet and plain values only. Dates are text, not Excel date objects. Maximum 5 MB, 10000 rows and 50 XLSX columns. Formulas, hyperlinks and rich text are rejected.
 
-| Column                           | Format / validation                                                 |
-| -------------------------------- | ------------------------------------------------------------------- |
-| employee_id                      | Existing synthetic ID, EMP001–EMP030                                |
-| department                       | Exact roster department: Outbound, Picking or Packing               |
-| work_date                        | YYYY-MM-DD, Monday–Friday in the reporting week                     |
-| reporting_week                   | Monday date: 2026-09-14, 2026-09-21, 2026-09-28 or 2026-10-05       |
-| cases_completed                  | Integer, 0–100000                                                   |
-| earned_standard_hours            | Numeric, 0–72                                                       |
-| actual_eligible_productive_hours | Numeric, greater than 0 and at most 24                              |
-| official_performance_percentage  | Numeric, 0–300; no % symbol                                         |
-| finalization_status              | finalized, corrected or pending                                     |
-| revision                         | Integer >= 1; corrections must exceed the existing revision         |
-| finalized_at                     | YYYY-MM-DDTHH:mm:ssZ, on/after work date; blank allowed for pending |
+| Column                           | Format / validation                                                                     |
+| -------------------------------- | --------------------------------------------------------------------------------------- |
+| employee_id                      | Stable synthetic ID EMP001–EMP030                                                       |
+| assignment_id                    | Registered unique work assignment, e.g. EMP002-2026-10-09-A                             |
+| shift_id                         | SHIFT_1, SHIFT_2 or SHIFT_3; work shift, not current primary shift                      |
+| department_id                    | RECEIVING, EQUIPMENT, ORDER_SELECTOR or SHIPPING; where the work occurred               |
+| department                       | Matching canonical display name: Receiving, Equipment, Order Selector or Shipping       |
+| work_date                        | YYYY-MM-DD operational workday; matches the work assignment, including overnight shifts |
+| reporting_week                   | Monday date: 2026-09-14, 2026-09-21, 2026-09-28 or 2026-10-05                           |
+| cases_completed                  | Integer 0–100000                                                                        |
+| earned_standard_hours            | Numeric 0–72                                                                            |
+| actual_eligible_productive_hours | Numeric greater than 0, at most 24; never scheduled shift hours                         |
+| official_performance_percentage  | Numeric 0–300, no % symbol                                                              |
+| finalization_status              | finalized, corrected or pending                                                         |
+| revision                         | Integer >=1; changed records require a higher revision                                  |
+| finalized_at                     | Valid YYYY-MM-DDTHH:mm:ssZ on/after work date; blank allowed for pending                |
 
-All column headers are required. Decimal separator is a period. Maximum 5 MB and 10000 rows; XLSX maximum 50 columns. The schema represents one aggregated eligible shift record per employee/work date. Multiple tasks or multiple shifts per day must be consolidated by the source before using this demo.
+Unique key: employee_id + assignment_id. Multiple departments, temporary shifts and overtime on one operational date are separate assignments. Duplicate keys inside a file block publication. Identical existing rows are skipped across filenames and file formats. Changed rows require a higher revision. The registered work assignment must match the employee, shift, department, work date and reporting week; a current primary assignment does not overwrite historical work.
 
-The unique key is employee_id + work_date. Duplicate keys inside a file are blocking errors. Identical existing records are skipped even if the filename changes. Changed records require a higher revision. Unknown employee IDs, roster mismatches and invalid values block the whole publication. No partial publication of a report with errors.
+Operational dates come from the source and explicit shift/work assignment. Third-shift activity after midnight stays on the preceding operational workday. Clock time alone cannot distinguish overlapping shifts. Unscheduled overtime needs an explicit source date and a registered overtime assignment. The demo does not create new roster/work assignments through imports.
 
-Reports are patches: absent employees and dates retain existing records. Missing roster members are flagged in the preview. A missing/pending daily record makes its reporting period incomplete. Zero productive hours cannot supply a valid percentage in this demo; such records must be resolved in the source.
+Reports are patches, not roster replacements. Missing employees retain existing records and are flagged in preview. A missing or pending expected work assignment makes its scoped reporting period incomplete. Unknown IDs, conflicting assignments, legacy labels, invalid values and schema errors block the entire publication. Approval revalidates against the latest in-memory snapshot.
 
-An official daily percentage differing from earned/actual by more than 0.2 percentage points produces a warning, not a silent rewrite. Daily official values remain as supplied; sample period calculations always use eligible earned hours / eligible actual hours × 100. No approved official period summary is included in this demo.
+Daily official assignment percentages are preserved. Differences from earned/eligible above 0.2 percentage points create a warning. Aggregates use summed eligible earned hours / summed eligible productive hours ×100. No approved official period summary is included. Scheduled 510-minute shift duration never enters productivity calculations.
 
-## Files to try
+## Files
 
-- baseline.csv / baseline.xlsx: all 598 original records, including missing and pending examples. Importing into the original snapshot reports 598 identical records and publishes nothing.
-- sample-correction.csv / sample-correction.xlsx: all 598 records with one revision to EMP002 on 2026-10-09: 3500 cases, 110%, revision 2. Preview reports 597 identical records and one correction. Approving changes the kiosk's latest shift and aggregate calculations in the same tab.
-- invalid.csv: missing columns and an unknown employee; rejected.
+- baseline.csv / baseline.xlsx: 600 current records across 602 expected assignments, including two missing and one pending record. Importing into the initial snapshot detects 600 identical rows.
+- sample-correction.csv / sample-correction.xlsx: one correction to EMP002-2026-10-09-A: 3500 cases, 110%, revision 2. Expect 599 skips and one correction, with refreshed kiosk results after approval in the same tab.
+- invalid.csv: intentionally invalid structure.
+- legacy-v1/: original 598-record reports preserved unchanged. These lack confirmed shift/department mapping and cannot be published into v2. Obtain a reviewed mapping and reconciliation before a real migration; no automatic relabeling is applied.
 
-All processing and publication happen in this tab's memory. Refresh, a new tab, another device, or closing the page returns to the baseline. No file storage, external synchronization or production access control is implemented.
+All processing and publication occur only in this tab's memory. Refresh/new tab/device restores the baseline. No secure storage, cross-device sync or production access control is implemented.
