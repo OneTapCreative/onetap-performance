@@ -61,9 +61,9 @@ Before any real workforce data is used:
 
 ## Deployment target
 
-Intended new repository: `OneTapCreative/onetap-performance`; intended new Vercel project: `onetap-performance`. No existing main website or client repository is used. No remote repository or deployment has been created yet. User requested a separate approval before Phase 5.
+Intended new repository: `OneTapCreative/onetap-performance`; intended new Vercel project: `onetap-performance`. No existing main website or client repository is used. The user created the separate repository and approved Phase 5. Source upload and Vercel preview verification are in progress.
 
-After approval, create an empty repository in the intended account, push this project including package-lock.json, and import it into a new Vercel project. Framework: Next.js; root: repository root; install: npm ci; build: npm run build. Use a preview first, verify `/`, `/kiosk`, `/manager`, the sample downloads, Safari interaction and all required viewports before treating it as deployment-complete. Never promote to an existing client/main website project.
+Use this separate repository, including package-lock.json, with a new Vercel project. Framework: Next.js; root: repository root; install: npm ci; build: npm run build. Use a preview first, verify `/`, `/kiosk`, `/manager`, the sample downloads, Safari interaction and all required viewports before treating it as deployment-complete. Never promote to an existing client/main website project.
 
 ## File map
 
