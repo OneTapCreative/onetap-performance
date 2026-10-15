@@ -15,6 +15,8 @@ import {
   shiftLabel,
   warehouseConfig,
 } from "@/lib/warehouse";
+import { UtilizationBadge, UtilizationGuide } from "./utilization";
+import { latestUtilizationRecord } from "@/lib/utilization";
 import { AssignmentSummary } from "./assignment-profile";
 import { Kpi, Translate } from "./ui";
 const formatDate = (date: string, es: boolean) =>
@@ -74,6 +76,12 @@ export function Performance({
     };
   }
   const workRows = own.filter((r) => workWeeks.includes(r.reportingWeek));
+  const utilizationRecord = latestUtilizationRecord(
+    records,
+    id,
+    scope,
+    workWeeks,
+  );
   const selected = day ? daily(day) : null;
   const time = own
     .filter(isFinal)
@@ -465,6 +473,26 @@ export function Performance({
         </>
       )}
       {manager && (
+        <section className="panel profile-utilization">
+          <div className="section-heading">
+            <h2>{tr("Utilization reference", "Referencia de utilización")}</h2>
+            <UtilizationBadge
+              value={utilizationRecord?.utilizationPercent}
+              tr={tr}
+            />
+          </div>
+          <p className="report-time">
+            {tr(
+              "Latest finalized work assignment",
+              "Última asignación finalizada",
+            )}
+            : {utilizationRecord?.assignmentId ?? "—"} ·{" "}
+            {utilizationRecord?.workDate ?? "—"}
+          </p>
+          <UtilizationGuide tr={tr} />
+        </section>
+      )}
+      {manager && (
         <section className="panel work-records">
           <div className="section-heading">
             <h2>
@@ -500,6 +528,7 @@ export function Performance({
                   <th>{tr("Shift", "Turno")}</th>
                   <th>{tr("Cases", "Cajas")}</th>
                   <th>%</th>
+                  <th>{tr("Utilization", "Utilización")}</th>
                   <th>
                     {tr("Earned / eligible h", "Horas ganadas / elegibles")}
                   </th>
@@ -521,6 +550,13 @@ export function Performance({
                         {isFinal(r)
                           ? percent(r.officialPercent)
                           : tr("Incomplete", "Incompleto")}
+                      </td>
+                      <td>
+                        <UtilizationBadge
+                          value={isFinal(r) ? r.utilizationPercent : null}
+                          tr={tr}
+                          compact
+                        />
                       </td>
                       <td>
                         {r.earnedHours.toFixed(3)} / {r.actualHours.toFixed(2)}

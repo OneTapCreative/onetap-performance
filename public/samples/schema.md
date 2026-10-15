@@ -1,6 +1,6 @@
 # OneTap Performance v2 synthetic import schema
 
-Use only the registered synthetic roster EMP001–EMP030 and work assignments in the current demo. All column headers are required, including stable work, shift and department IDs. CSV has a header row; XLSX uses its first sheet and plain values only. Dates are text, not Excel date objects. Maximum 5 MB, 10000 rows and 50 XLSX columns. Formulas, hyperlinks and rich text are rejected.
+Use only the registered synthetic roster EMP001–EMP030 and work assignments in the current demo. All core column headers are required, including stable work, shift and department IDs. The utilization_percentage extension is optional. CSV has a header row; XLSX uses its first sheet and plain values only. Dates are text, not Excel date objects. Maximum 5 MB, 10000 rows and 50 XLSX columns. Formulas, hyperlinks and rich text are rejected.
 
 | Column                           | Format / validation                                                                     |
 | -------------------------------- | --------------------------------------------------------------------------------------- |
@@ -18,6 +18,7 @@ Use only the registered synthetic roster EMP001–EMP030 and work assignments in
 | finalization_status              | finalized, corrected or pending                                                         |
 | revision                         | Integer >=1; changed records require a higher revision                                  |
 | finalized_at                     | Valid YYYY-MM-DDTHH:mm:ssZ on/after work date; blank allowed for pending                |
+| utilization_percentage           | Optional reported percentage 0–100; blank = unavailable; informational only             |
 
 Unique key: employee_id + assignment_id. Multiple departments, temporary shifts and overtime on one operational date are separate assignments. Duplicate keys inside a file block publication. Identical existing rows are skipped across filenames and file formats. Changed rows require a higher revision. The registered work assignment must match the employee, shift, department, work date and reporting week; a current primary assignment does not overwrite historical work.
 
@@ -35,3 +36,5 @@ Daily official assignment percentages are preserved. Differences from earned/eli
 - legacy-v1/: original 598-record reports preserved unchanged. These lack confirmed shift/department mapping and cannot be published into v2. Obtain a reviewed mapping and reconciliation before a real migration; no automatic relabeling is applied.
 
 All processing and publication occur only in this tab's memory. Refresh/new tab/device restores the baseline. No secure storage, cross-device sync or production access control is implemented.
+
+Utilization is independent of productivity. No indirect hours or utilization percentage is inferred from scheduled hours. If the optional column is absent, existing rows retain their utilization; new records without a known value use null. A present blank clears the value (higher revision required for changed existing rows). Utilization changes never alter productivity status or create accountability/coaching actions. See docs/UTILIZATION.md for visual bands and scope.

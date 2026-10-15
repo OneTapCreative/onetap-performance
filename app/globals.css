@@ -1891,3 +1891,124 @@ caption {
     max-width: none;
   }
 }
+/* Informational utilization styling is deliberately separate from productivity standing. */
+.utilization-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  line-height: 1.4;
+  border: 1px solid transparent;
+  white-space: normal;
+  min-width: 104px;
+}
+.utilization-badge strong {
+  font-size: 23px;
+  letter-spacing: -0.6px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.utilization-badge.compact {
+  padding: 7px 10px;
+  font-size: 10px;
+  min-width: 100px;
+}
+.utilization-badge.compact strong {
+  font-size: 19px;
+}
+.util-low {
+  background: #fff0e5;
+  color: #8a3516;
+  border-color: #e5c2a8;
+}
+.util-target {
+  background: #e9f3e3;
+  color: #27552b;
+  border-color: #c9ddbe;
+}
+.util-high {
+  background: #fff5cf;
+  color: #69500b;
+  border-color: #dece91;
+}
+.util-between,
+.util-unavailable {
+  background: #eef1ef;
+  color: #465c50;
+  border-color: #d9e2dc;
+}
+.utilization-guide {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 24px 28px;
+  margin: 24px 0;
+}
+.utilization-guide h2 {
+  font-size: 22px;
+}
+.utilization-guide .section-heading {
+  margin-bottom: 18px;
+}
+.utilization-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0;
+}
+.utilization-legend > span {
+  font-size: 11px;
+  line-height: 1.5;
+  padding: 9px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+}
+.utilization-guide p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin-top: 12px;
+}
+.utilization-guide small {
+  font-size: 10px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin-top: 14px;
+}
+.profile-utilization {
+  margin-top: 24px;
+}
+.profile-utilization .utilization-guide {
+  margin-bottom: 0;
+  background: var(--paper);
+  border-radius: 14px;
+}
+@media (max-width: 700px) {
+  .utilization-guide {
+    padding: 20px;
+  }
+  .utilization-guide .section-heading {
+    flex-direction: column;
+  }
+  .utilization-guide .section-heading > .pill {
+    max-width: none;
+  }
+  .utilization-guide h2 {
+    font-size: 21px;
+  }
+  .utilization-legend {
+    gap: 8px;
+  }
+  .utilization-legend > span {
+    font-size: 10px;
+  }
+  .profile-utilization .section-heading {
+    flex-direction: column;
+  }
+  .profile-utilization .utilization-guide {
+    padding: 16px;
+  }
+}

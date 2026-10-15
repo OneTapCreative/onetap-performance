@@ -5,6 +5,8 @@ import { Brand, Kpi } from "@/components/ui";
 import { useDemo } from "@/components/demo-provider";
 import { Performance } from "@/components/performance";
 import { ImportPanel } from "@/components/import-panel";
+import { UtilizationBadge, UtilizationGuide } from "@/components/utilization";
+import { latestUtilizationRecord } from "@/lib/utilization";
 import { EmployeeProfile } from "@/components/assignment-profile";
 import { associates, WEEK_STARTS } from "@/lib/data";
 import { percent, scopedOverview, summarize } from "@/lib/performance";
@@ -386,6 +388,7 @@ export default function Manager() {
                   }
                 />
               </div>
+              <UtilizationGuide tr={tr} />
               <section className="panel roster">
                 <div className="section-heading">
                   <div>
@@ -442,7 +445,12 @@ export default function Manager() {
                         <th>{tr("Work shift(s)", "Turno(s) del trabajo")}</th>
                         <th>{tr("1 week", "1 semana")}</th>
                         <th>{tr("4 weeks", "4 semanas")}</th>
-                        <th>{tr("Standing", "Estado")}</th>
+                        <th>
+                          {tr("Productivity status", "Estado de productividad")}
+                        </th>
+                        <th>
+                          {tr("Latest utilization", "Última utilización")}
+                        </th>
                         <th>
                           <span className="sr-only">
                             {tr("Details", "Detalles")}
@@ -454,6 +462,12 @@ export default function Manager() {
                       {rows.map((a) => {
                         const work = overview.expected.filter(
                           (w) => w.employeeId === a.id,
+                        );
+                        const utilization = latestUtilizationRecord(
+                          records,
+                          a.id,
+                          scope,
+                          selectedWeeks,
                         );
                         return (
                           <tr key={a.id}>
@@ -495,6 +509,27 @@ export default function Manager() {
                                         "Datos insuficientes",
                                       )}
                               </span>
+                            </td>
+                            <td>
+                              <UtilizationBadge
+                                value={utilization?.utilizationPercent}
+                                tr={tr}
+                                compact
+                              />
+                              <small>
+                                {utilization?.workDate ??
+                                  tr(
+                                    "No finalized report",
+                                    "Sin informe finalizado",
+                                  )}
+                              </small>
+                              <small>
+                                {tr(
+                                  "Latest work assignment",
+                                  "Última asignación",
+                                )}
+                                : {utilization?.assignmentId ?? "—"}
+                              </small>
                             </td>
                             <td>
                               <button

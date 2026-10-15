@@ -23,6 +23,7 @@ export const COLUMNS = [
   "finalization_status",
   "revision",
   "finalized_at",
+  "utilization_percentage",
 ];
 export type ImportStage = {
   name: string;
@@ -50,6 +51,7 @@ const canonical = (r: PerformanceRecord) =>
     r.status,
     r.revision,
     r.finalizedAt,
+    r.utilizationPercent ?? null,
   ]);
 export function toImportRow(
   r: PerformanceRecord,
@@ -69,6 +71,7 @@ export function toImportRow(
     finalization_status: r.status,
     revision: r.revision,
     finalized_at: r.finalizedAt,
+    utilization_percentage: r.utilizationPercent ?? "",
   };
 }
 export function validate(
@@ -87,7 +90,9 @@ export function validate(
     missing: [],
     preview: [],
   };
-  const missingColumns = COLUMNS.filter((c) => !headers.includes(c));
+  const missingColumns = COLUMNS.filter(
+    (c) => c !== "utilization_percentage" && !headers.includes(c),
+  );
   if (new Set(headers).size !== headers.length) {
     stage.errors.push("Duplicate column headers.");
     return stage;
@@ -125,9 +130,26 @@ export function validate(
       status: text("finalization_status") as PerformanceRecord["status"],
       revision: number("revision"),
       finalizedAt: text("finalized_at"),
+      utilizationPercent: headers.includes("utilization_percentage")
+        ? text("utilization_percentage") === ""
+          ? null
+          : number("utilization_percentage")
+        : (existing.get(`${text("employee_id")}|${text("assignment_id")}`)
+            ?.utilizationPercent ?? null),
     };
     const error = (message: string) =>
       stage.errors.push(`Row ${i + 2}: ${message}`);
+    if (
+      r.utilizationPercent !== null &&
+      (!Number.isFinite(r.utilizationPercent) ||
+        r.utilizationPercent < 0 ||
+        r.utilizationPercent > 100)
+    ) {
+      error(
+        "Utilization must be a reported percentage between 0 and 100, or blank for unavailable.",
+      );
+      return;
+    }
     const person = associates.find((a) => a.id === r.employeeId);
     if (!person) {
       error(`Unknown synthetic employee ID ${r.employeeId || "(blank)"}.`);

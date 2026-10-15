@@ -87,3 +87,8 @@ CREATE TABLE legacy_report_archive (
  original_report jsonb NOT NULL, mapping_state text NOT NULL DEFAULT 'unresolved',
  PRIMARY KEY (warehouse_id,id)
 );
+
+-- Optional source-reported utilization: informational only, never an accountability input.
+-- No utilization-derived coaching, discipline, review queue or productivity-status trigger.
+ALTER TABLE performance_revisions ADD COLUMN utilization_percentage numeric
+ CHECK (utilization_percentage IS NULL OR utilization_percentage BETWEEN 0 AND 100);

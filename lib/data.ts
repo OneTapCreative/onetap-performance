@@ -122,6 +122,7 @@ export type PerformanceRecord = {
   earnedHours: number;
   actualHours: number;
   officialPercent: number;
+  utilizationPercent: number | null;
   status: "finalized" | "corrected" | "pending";
   revision: number;
   finalizedAt: string;
@@ -164,6 +165,8 @@ export const initialRecords: PerformanceRecord[] = workAssignments.flatMap(
         earnedHours: Number(((actual * pct) / 100).toFixed(4)),
         actualHours: actual,
         officialPercent: pct,
+        utilizationPercent:
+          i === 6 ? null : [76, 85, 88, 80, 92][i % 5] + [0, -1, 1, 0, 0][d],
         status: pending ? "pending" : corrected ? "corrected" : "finalized",
         revision: corrected ? 2 : 1,
         finalizedAt: pending ? "" : `${dateAt(a.workDate, 2)}T15:00:00Z`,

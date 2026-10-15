@@ -1,9 +1,9 @@
-# Warehouse configuration update verification
+# OneTap Performance verification
 
 ## Passed locally
 
 - Production `next build` with Next.js 16.4.1 completed, including TypeScript checking and static route generation for `/`, `/kiosk`, `/manager` and the not-found route.
-- 52 automated tests passed in six files using Vitest and React Testing Library/jsdom.
+- 75 automated tests passed in seven files using Vitest and React Testing Library/jsdom.
 - Existing correct/incorrect kiosk sign-in, keypad/clear/backspace, manual logout, 60-second idle deadline, user-interaction reset, hidden-tab expiry, Spanish, privacy, daily/week details, manager entry and approved import-to-kiosk refresh tests remain passing.
 - Existing 95% OR boundary/incomplete cases, unequal-duration weighting, corrected revisions, CSV/XLSX parsing, duplicate prevention, stale approvals, invalid values/formulas/file sizes remain passing against the new schema.
 - New tests verify exact shift schedules/IDs, department names/IDs, overnight work dates, overlapping shift candidates, overtime source dates, stable employee IDs, effective-dated transfers, combined shift/department/week filters, distinct headcount, separate work assignment count, correct denominator, expected-assignment completeness, earlier reporting anchors, legacy preservation, configurable threshold and historical/temporary import validation.
@@ -27,3 +27,7 @@ Coaching is architecture only: no stored notes, secure coaching authorization or
 4. Kiosk EMP002 / 1234: Shipping, 2nd Shift, 2:00 PM–10:30 PM; historical results, timeout and sign-out remain available.
 5. Import sample v2 CSV/XLSX: 599 identical rows and one correction. Approve then use kiosk in the same tab for 3500 latest-shift cases / 110% official result. Refresh restores baseline.
 6. Legacy archive download retains original data; v1 imports explicitly require reviewed mapping rather than silently mapping labels.
+
+## Utilization enhancement
+
+23 additional test cases cover exact visual boundaries, neutral fractional gaps, missing/invalid values, no rounding across boundaries, unchanged productivity/accountability metrics for 0–100/null utilization, no coaching generation, finalized assignment/shift/department/period selection, optional backwards-compatible imports, utilization-only corrections, real XLSX parsing, bilingual text labels, manager verification notice and kiosk exclusion. Utilization remains source-reported and is not averaged or calculated from shift hours. Import preview exposes its value separately from productivity. Coaching remains planned. Browser/iPad visual acceptance is still outstanding; no new browser verification is claimed.

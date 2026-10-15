@@ -64,3 +64,7 @@ Repository: https://github.com/OneTapCreative/onetap-performance
 Live application: https://onetap-performance.vercel.app
 
 Only this repository/project is used. Git-connected Vercel builds the Next.js project from repository root. No changes to the main agency or client websites. See `QA.md` for verification limits.
+
+## Manager utilization reference
+
+The manager roster and employee detail show source-reported utilization separately from productivity: ≤79% Low Utilization (orange/red), 80–85% Target Range (green, proposed), ≥86% High Utilization (amber). Missing values stay unavailable. It is a visual reference only: verify utilization, indirect functions, PF&D and downtime in Manhattan before conclusions. It never changes the 95% productivity OR rule, review counts or coaching. The roster value is the latest finalized work assignment in the selected scope, not a weekly/department average. The kiosk is unchanged. Optional CSV/XLSX column utilization_percentage supports 0–100 or blank. See [utilization details](docs/UTILIZATION.md).

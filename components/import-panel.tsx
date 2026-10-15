@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useDemo } from "./demo-provider";
 import { ImportStage, parseFile, publish } from "@/lib/import";
 import { Translate } from "./ui";
+import { UtilizationBadge } from "./utilization";
 export function ImportPanel({ tr }: { tr: Translate }) {
   const { records, setRecords, setPublication } = useDemo();
   const [stage, setStage] = useState<ImportStage | null>(null),
@@ -188,16 +189,29 @@ export function ImportPanel({ tr }: { tr: Translate }) {
                     <th>{tr("Date", "Fecha")}</th>
                     <th>{tr("Cases", "Cajas")}</th>
                     <th>%</th>
+                    <th>
+                      {tr(
+                        "Utilization · reference",
+                        "Utilización · referencia",
+                      )}
+                    </th>
                     <th>{tr("Revision", "Revisión")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {stage.preview.map((r) => (
-                    <tr key={r.employeeId + r.workDate}>
+                    <tr key={r.employeeId + r.assignmentId}>
                       <td>{r.employeeId}</td>
                       <td>{r.workDate}</td>
                       <td>{r.cases}</td>
                       <td>{r.officialPercent}%</td>
+                      <td>
+                        <UtilizationBadge
+                          value={r.utilizationPercent}
+                          tr={tr}
+                          compact
+                        />
+                      </td>
                       <td>{r.revision}</td>
                     </tr>
                   ))}
